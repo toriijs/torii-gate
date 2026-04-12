@@ -1,0 +1,23 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.prettier": "always",
+    "source.fixAll.eslint": "always"
+  },
+  "files.exclude": {
+    ".git": true,
+    "**/.DS_Store": true
+  },
+  "files.readonlyInclude": {
+    "**/node_modules/**/*.*": true,
+    "**/package-lock.yaml": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "dist/**": true,
+    "**/.turbo": true
+  },
+  "git.branchProtection": ["main"],
+  "git.branchProtectionPrompt": "alwaysPrompt",
+  "git.pullBeforeCheckout": true,
+  "testing.automaticallyOpenTestResults": "openOnTestFailure"
+}

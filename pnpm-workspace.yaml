@@ -1,0 +1,9 @@
+packages:
+  - 'packages/*'
+  - 'docs'
+
+# Supply chain security
+blockExoticSubdeps: true
+minimumReleaseAge: 1440 # 1 day
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 43200
