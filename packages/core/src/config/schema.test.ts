@@ -7,21 +7,21 @@
 
 import { describe, it, expect } from 'vitest';
 import { parse, ValiError } from 'valibot';
-import { ToriiConfigSchema } from '../../src/config/schema';
+import { ToriiConfigSchema } from './schema';
 
 const VALID_CONFIG = {
   oidc: {
-    issuer: 'https://auth.torii.local/realms/test',
+    issuer: 'https://auth.torii.dev/realms/test',
     clientId: 'my-client',
     clientSecret: 'my-secret',
-    redirectUri: 'https://app.example.com/auth/callback',
+    redirectUri: 'https://app.torii.dev/auth/callback',
   },
   session: {
     type: 'cookie' as const,
     secret: 'a'.repeat(32),
   },
   routing: {
-    upstreamUrl: 'https://api.example.com',
+    upstreamUrl: 'https://api.torii.dev',
   },
 };
 
@@ -148,7 +148,7 @@ describe('toriiConfigSchema — OIDC validation', () => {
   it('throws when issuer uses HTTP', () => {
     const config = {
       ...VALID_CONFIG,
-      oidc: { ...VALID_CONFIG.oidc, issuer: 'http://auth.torii.local' },
+      oidc: { ...VALID_CONFIG.oidc, issuer: 'http://auth.torii.dev' },
     };
 
     expect(() => parse(ToriiConfigSchema, config)).toThrow(ValiError);
@@ -166,7 +166,7 @@ describe('toriiConfigSchema — OIDC validation', () => {
   it('throws when redirectUri uses HTTP', () => {
     const config = {
       ...VALID_CONFIG,
-      oidc: { ...VALID_CONFIG.oidc, redirectUri: 'http://app.example.com/callback' },
+      oidc: { ...VALID_CONFIG.oidc, redirectUri: 'http://app.torii.dev/callback' },
     };
 
     expect(() => parse(ToriiConfigSchema, config)).toThrow(ValiError);
@@ -182,14 +182,14 @@ describe('toriiConfigSchema — OIDC validation', () => {
   it('rejects HTTP URLs (HTTPS required)', () => {
     const httpIssuer = {
       ...VALID_CONFIG,
-      oidc: { ...VALID_CONFIG.oidc, issuer: 'http://auth.torii.local' },
+      oidc: { ...VALID_CONFIG.oidc, issuer: 'http://auth.torii.dev' },
     };
 
     expect(() => parse(ToriiConfigSchema, httpIssuer)).toThrow(/must use HTTPS/);
 
     const httpRedirectUri = {
       ...VALID_CONFIG,
-      oidc: { ...VALID_CONFIG.oidc, redirectUri: 'http://app.example.com/callback' },
+      oidc: { ...VALID_CONFIG.oidc, redirectUri: 'http://app.torii.dev/callback' },
     };
 
     expect(() => parse(ToriiConfigSchema, httpRedirectUri)).toThrow(/must use HTTPS/);
@@ -293,7 +293,7 @@ describe('toriiConfigSchema — topology', () => {
       security: {
         topology: 'subdomain',
         cookieDomain: 'example.com',
-        allowedOrigins: ['https://app.example.com'],
+        allowedOrigins: ['https://app.torii.dev'],
       },
     });
 
@@ -316,7 +316,7 @@ describe('toriiConfigSchema — topology', () => {
         security: {
           topology: 'subdomain',
           cookieDomain: 'example.com',
-          allowedOrigins: ['https://app.example.com'],
+          allowedOrigins: ['https://app.torii.dev'],
         },
       }),
     ).not.toThrow();
@@ -337,7 +337,7 @@ describe('toriiConfigSchema — topology', () => {
         ...VALID_CONFIG,
         security: {
           topology: 'subdomain',
-          allowedOrigins: ['https://app.example.com'],
+          allowedOrigins: ['https://app.torii.dev'],
         },
       }),
     ).toThrow(ValiError);
