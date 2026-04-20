@@ -3,5 +3,8 @@
   "tags": ["-lintignore"],
   "workspaces": {
     ".": {}
+  },
+  "ignoreIssues": {
+    "vitest.base.ts": ["exports"]
   }
 }
