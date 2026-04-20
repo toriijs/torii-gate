@@ -25,6 +25,8 @@ export default [
       '**/package.json',
       '**/*.md',
       '**/*.json',
+      'vitest.base.ts',
+      '**/vitest.config.ts',
     ],
   },
 
