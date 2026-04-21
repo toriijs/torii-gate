@@ -13,7 +13,7 @@ export const sharedConfig: ViteUserConfig = {
 
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov', 'html'],
+      reporter: ['text', 'lcov', 'cobertura'],
       exclude: [
         'src/**/*.d.ts',
         'src/**/index.ts', // barrel files — no logic to cover
