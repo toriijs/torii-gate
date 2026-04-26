@@ -262,13 +262,13 @@ export type SecurityConfig =
   | {
       topology: 'same-domain';
       csrfHeader: string;
-      cookieName: string;
+      cookieName: `__Host-${string}`;
       allowedOrigins: string[];
     }
   | {
       topology: 'subdomain';
       cookieDomain: string;
       csrfHeader: string;
-      cookieName: string;
+      cookieName: `__Secure-${string}`;
       allowedOrigins: string[];
     };
