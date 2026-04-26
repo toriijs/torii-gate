@@ -19,6 +19,23 @@
  *   - @torii-gate/adapter-cookie/pending — CookiePendingStore (stateless, AES-GCM encrypted)
  *   - @torii-gate/adapter-memory/pending — MemoryPendingStore (dev/test only)
  *   - @torii-gate/adapter-redis — NodeRedisPendingStore, UpstashRedisPendingStore
+ *
+ * DESIGN: Stateful vs Stateless Implementations
+ *
+ * This interface supports two removal patterns for single-use enforcement:
+ *
+ * 1. Stateful (Redis, Memory):
+ *    - get() atomically retrieves and deletes
+ *    - clear() returns empty headers {}
+ *    - Single-use enforced at first get()
+ *
+ * 2. Stateless (Cookie):
+ *    - get() retrieves and validates state (timing-safe comparison)
+ *    - clear() returns Set-Cookie headers with Max-Age=0
+ *    - Single-use enforced when browser receives callback response
+ *
+ * Both patterns satisfy single-use enforcement; the difference is timing.
+ * The service layer calls clear() and appends headers for both types.
  */
 
 export interface PendingAuth {
@@ -44,16 +61,26 @@ export interface PendingAuthStore {
   set(data: PendingAuth): Promise<Record<string, string>>;
 
   /**
-   * Retrieves and removes pending auth state by state value.
-   * Returns null if not found or expired (single-use enforcement).
-   * The second argument provides the incoming request for cookie-based stores.
+   * Retrieves pending auth state by state value (single-use enforcement).
+   *
+   * Stateful implementations (Redis, Memory): Atomically deletes on retrieval.
+   * Stateless implementations (Cookie): Validates state; deletion via clear() headers.
+   *
+   * Returns null if not found or expired.
+   *
+   * @param state - OAuth state parameter from callback URL
+   * @param request - Incoming request (required for cookie-based stores to read cookies)
    */
   get(state: string, request?: Request): Promise<PendingAuth | null>;
 
   /**
    * Returns headers to attach to the callback response to clean up state.
-   * Cookie implementations use this to clear the PKCE cookie.
-   * Redis implementations return empty object.
+   *
+   * Stateless implementations (Cookie): Returns {'set-cookie': '...'} with Max-Age=0.
+   * Stateful implementations (Redis, Memory): Returns empty object {}.
+   *
+   * The service layer MUST call this after successful callback and append headers
+   * to the response to complete single-use enforcement for cookie-based stores.
    */
   clear(): Record<string, string>;
 }
