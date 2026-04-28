@@ -9,6 +9,6 @@ export {
   type OidcConfig,
   type RoutingConfig,
   type SecurityConfig,
-} from "./schema.js";
+} from './schema.js';
 
-export { loadConfigFromEnv, type Env } from "./env.js";
+export { loadConfigFromEnv, type Env } from './env.js';
