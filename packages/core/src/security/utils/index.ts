@@ -20,18 +20,22 @@ export function extractCookieValue(cookieHeader: string, name: string): string |
  *
  */
 export function base64urlEncode(bytes: Uint8Array): string {
-  const binary = Array.from(bytes, (b) => String.fromCodePoint(b)).join("");
-  return btoa(binary)
-    .replaceAll("+", "-")
-    .replaceAll("/", "_")
-    .replace(/=+$/, "");
+  const binary = Array.from(bytes, (b) => String.fromCodePoint(b)).join('');
+  let result = btoa(binary).replaceAll('+', '-').replaceAll('/', '_');
+
+  // Remove trailing padding without regex (avoids ReDoS risk)
+  while (result.endsWith('=')) {
+    result = result.slice(0, -1);
+  }
+
+  return result;
 }
 
 export function base64urlDecode(value: string): Uint8Array {
   const base64 = value
-    .replaceAll("-", "+")
-    .replaceAll("_", "/")
-    .padEnd(value.length + ((4 - (value.length % 4)) % 4), "=");
+    .replaceAll('-', '+')
+    .replaceAll('_', '/')
+    .padEnd(value.length + ((4 - (value.length % 4)) % 4), '=');
   const binary = atob(base64);
   return new Uint8Array(Array.from(binary, (c) => c.codePointAt(0) ?? 0));
 }
@@ -45,16 +49,9 @@ export function base64urlDecode(value: string): Uint8Array {
 export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
   const encoder = new TextEncoder();
 
-  const key = await crypto.subtle.generateKey(
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+  const key = await crypto.subtle.generateKey({ name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
 
-  const [macA, macB] = await Promise.all([
-    crypto.subtle.sign("HMAC", key, encoder.encode(a)),
-    crypto.subtle.sign("HMAC", key, encoder.encode(b)),
-  ]);
+  const [macA, macB] = await Promise.all([crypto.subtle.sign('HMAC', key, encoder.encode(a)), crypto.subtle.sign('HMAC', key, encoder.encode(b))]);
 
   const viewA = new Uint8Array(macA);
   const viewB = new Uint8Array(macB);
