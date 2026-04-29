@@ -5,7 +5,7 @@
  */
 
 import { algParams, type JwsAlgorithm } from '../../src/security/webcrypto.js';
-import { base64urlEncode, base64urlDecode } from '../../src/security/utils/index.js';
+import { base64urlEncode } from '../../src/security/utils/index.js';
 
 /**
  * Encode a JSON object to base64url string (test helper)
@@ -20,21 +20,6 @@ export function encodeJsonToBase64url(obj: unknown): string {
   const json = JSON.stringify(obj);
   const bytes = new TextEncoder().encode(json);
   return base64urlEncode(bytes);
-}
-
-/**
- * Decode a base64url string to a JSON object (test helper)
- *
- * Composition of base64urlDecode + TextDecoder + JSON.parse.
- *
- * @param str - base64url-encoded string
- * @returns Parsed JSON object
- */
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
-export function decodeBase64urlToJson<T = unknown>(str: string): T {
-  const bytes = base64urlDecode(str);
-  const json = new TextDecoder().decode(bytes);
-  return JSON.parse(json) as T;
 }
 
 /**
