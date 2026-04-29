@@ -13,6 +13,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { verifyIdToken, JwtError, type JwksKeySource } from './jwt.js';
 import { base64urlEncode } from './utils/index.js';
 import type { JwsAlgorithm } from './webcrypto.js';
+import { generateRsaKeyPair, generateEcdsaKeyPair, tamperFirstByte, buildIdToken, encodeJsonToBase64url } from '../../tests/fixtures/crypto.js';
 
 interface JwkWithKid extends JsonWebKey {
   kid: string;
@@ -30,27 +31,6 @@ function mockKeySource(keys: Record<string, { jwk: JsonWebKey; alg: JwsAlgorithm
   };
 }
 
-async function buildIdToken(payload: Record<string, unknown>, alg: JwsAlgorithm, kid: string, keyPair: CryptoKeyPair): Promise<string> {
-  const header = { alg, kid, typ: 'JWT' };
-  const headerB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify(header)));
-  const payloadB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
-  const signingInput = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-
-  let signAlg: AlgorithmIdentifier | RsaPssParams | EcdsaParams;
-  if (alg.startsWith('RS')) {
-    signAlg = 'RSASSA-PKCS1-v1_5';
-  } else if (alg.startsWith('PS')) {
-    signAlg = { name: 'RSA-PSS', saltLength: 32 };
-  } else {
-    signAlg = { name: 'ECDSA', hash: 'SHA-256' };
-  }
-
-  const signature = await crypto.subtle.sign(signAlg, keyPair.privateKey, signingInput);
-  const signatureB64 = base64urlEncode(new Uint8Array(signature));
-
-  return `${headerB64}.${payloadB64}.${signatureB64}`;
-}
-
 describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)', () => {
   let rsaKeyPair: CryptoKeyPair;
   let rsaJwk: JwkWithKid;
@@ -58,15 +38,11 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
   let ecJwk: JwkWithKid;
 
   beforeAll(async () => {
-    rsaKeyPair = await crypto.subtle.generateKey(
-      { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
-      true,
-      ['sign', 'verify'],
-    );
+    rsaKeyPair = await generateRsaKeyPair();
     const rsaExported = await crypto.subtle.exportKey('jwk', rsaKeyPair.publicKey);
     rsaJwk = { ...rsaExported, kid: 'rsa-test-key' };
 
-    ecKeyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+    ecKeyPair = await generateEcdsaKeyPair();
     const ecExported = await crypto.subtle.exportKey('jwk', ecKeyPair.publicKey);
     ecJwk = { ...ecExported, kid: 'ec-test-key' };
   });
@@ -193,8 +169,8 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
 
     it('rejects header without alg', async () => {
       // Arrange
-      const headerB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify({ typ: 'JWT' })));
-      const payloadB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify({ iss: 'x' })));
+      const headerB64 = encodeJsonToBase64url({ typ: 'JWT' });
+      const payloadB64 = encodeJsonToBase64url({ iss: 'x' });
 
       // Act & Assert
       await expect(
@@ -225,8 +201,8 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
       // Arrange
       const header = { alg: 'none', typ: 'JWT' };
       const payload = { iss: 'https://issuer.torii.dev', aud: 'client-id', exp: nowSec() + 300, nonce: 'nonce' };
-      const headerB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify(header)));
-      const payloadB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+      const headerB64 = encodeJsonToBase64url(header);
+      const payloadB64 = encodeJsonToBase64url(payload);
       // RFC 8725 requires rejecting alg:none, but the signature must be present (even if empty)
       const idToken = `${headerB64}.${payloadB64}.fake`;
 
@@ -245,8 +221,8 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
       // Arrange
       const header = { alg, kid: 'k', typ: 'JWT' };
       const payload = { iss: 'https://issuer.torii.dev', aud: 'client-id', exp: nowSec() + 300, nonce: 'nonce' };
-      const headerB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify(header)));
-      const payloadB64 = base64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+      const headerB64 = encodeJsonToBase64url(header);
+      const payloadB64 = encodeJsonToBase64url(payload);
       const idToken = `${headerB64}.${payloadB64}.fakesig`;
 
       // Act & Assert
@@ -276,11 +252,7 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
       const parts = idToken.split('.');
       const sigPart = parts[2] ?? '';
       const sigBytes = Uint8Array.from(atob(sigPart.replaceAll('-', '+').replaceAll('_', '/')), (c) => c.codePointAt(0) ?? 0);
-      const firstByte = sigBytes[0];
-      // eslint-disable-next-line vitest/no-conditional-in-test
-      if (firstByte !== undefined) {
-        sigBytes[0] = firstByte ^ 0xff;
-      }
+      tamperFirstByte(sigBytes);
       parts[2] = base64urlEncode(sigBytes);
       idToken = parts.join('.');
 

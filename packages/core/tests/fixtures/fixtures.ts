@@ -1,4 +1,4 @@
-import type { SessionAdapter, SessionData } from '../src/adapters/index.js';
+import type { SessionAdapter, SessionData } from '../../src/adapters/index.js';
 import { vi } from 'vitest';
 
 export function createMockAdapter(session: SessionData | null): SessionAdapter {

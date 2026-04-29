@@ -19,7 +19,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createProxy } from './index.js';
 import type { SessionData } from '../adapters/index.js';
-import { createMockAdapter } from '../../tests/fixtures.js';
+import { createMockAdapter } from '../../tests/fixtures/fixtures.js';
 
 const VALID_SESSION = {
   accessToken: 'eyJhbGciOiJSUzI1NiJ9.valid.token',

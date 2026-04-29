@@ -9,6 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { SUPPORTED_JWS_ALGORITHMS, isSupportedJwsAlg, algParams, importJwkVerifyKey, verifyJws, type JwsAlgorithm } from './webcrypto.js';
+import { generateRsaKeyPair, generateEcdsaKeyPair, tamperFirstByte } from '../../tests/fixtures/crypto.js';
 
 describe('webcrypto — JWS primitives', () => {
   describe(isSupportedJwsAlg, () => {
@@ -55,11 +56,7 @@ describe('webcrypto — JWS primitives', () => {
 
   describe('importJwkVerifyKey + verifyJws — round-trip', () => {
     it('rS256: imports RSA public key and verifies signature', async () => {
-      const { publicKey, privateKey } = await crypto.subtle.generateKey(
-        { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
-        true,
-        ['sign', 'verify'],
-      );
+      const { publicKey, privateKey } = await generateRsaKeyPair();
 
       const jwk = await crypto.subtle.exportKey('jwk', publicKey);
       const imported = await importJwkVerifyKey(jwk, 'RS256');
@@ -73,7 +70,7 @@ describe('webcrypto — JWS primitives', () => {
     });
 
     it('eS256: imports ECDSA public key and verifies signature', async () => {
-      const { publicKey, privateKey } = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+      const { publicKey, privateKey } = await generateEcdsaKeyPair();
 
       const jwk = await crypto.subtle.exportKey('jwk', publicKey);
       const imported = await importJwkVerifyKey(jwk, 'ES256');
@@ -87,11 +84,7 @@ describe('webcrypto — JWS primitives', () => {
     });
 
     it('pS256: imports RSA-PSS public key and verifies signature', async () => {
-      const { publicKey, privateKey } = await crypto.subtle.generateKey(
-        { name: 'RSA-PSS', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
-        true,
-        ['sign', 'verify'],
-      );
+      const { publicKey, privateKey } = await generateRsaKeyPair('RSA-PSS');
 
       const jwk = await crypto.subtle.exportKey('jwk', publicKey);
       const imported = await importJwkVerifyKey(jwk, 'PS256');
@@ -105,11 +98,7 @@ describe('webcrypto — JWS primitives', () => {
     });
 
     it('rejects tampered signature', async () => {
-      const { publicKey, privateKey } = await crypto.subtle.generateKey(
-        { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
-        true,
-        ['sign', 'verify'],
-      );
+      const { publicKey, privateKey } = await generateRsaKeyPair();
 
       const jwk = await crypto.subtle.exportKey('jwk', publicKey);
       const imported = await importJwkVerifyKey(jwk, 'RS256');
@@ -117,11 +106,7 @@ describe('webcrypto — JWS primitives', () => {
       const data = new TextEncoder().encode('test payload');
       const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', privateKey, data);
       const tampered = new Uint8Array(signature);
-      const firstByte = tampered[0];
-      // eslint-disable-next-line vitest/no-conditional-in-test
-      if (firstByte !== undefined) {
-        tampered[0] = firstByte ^ 0xff; // Flip bits in first byte
-      }
+      tamperFirstByte(tampered);
 
       const valid = await verifyJws('RS256', imported, data, tampered);
 
