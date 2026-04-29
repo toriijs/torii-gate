@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint .",
-    "types:check": "tsc --project tsconfig.build.json --noEmit",
+    "types:check": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "clean": "rm -rf lib"
