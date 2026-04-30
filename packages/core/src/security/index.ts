@@ -13,3 +13,4 @@ export {
   type TopologyConfig,
   type TopologyValidationError,
 } from './topology.js';
+export { buildSessionCookie, clearSessionCookie, parseSessionCookieName, type CookieOptions } from './cookie.js';
