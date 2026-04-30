@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, expectTypeOf } from 'vitest';
-import { buildPkceStateCookie, readPkceStateCookie, clearPkceStateCookie, type PkceStateCookieData } from '../../src/security/pkce-state-cookie';
+import { buildPkceStateCookie, readPkceStateCookie, clearPkceStateCookie, type PkceStateCookieData } from './pkce-state-cookie.js';
 
 const SECRET = 'test-secret-minimum-32-characters!!';
 

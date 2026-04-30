@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateCsrf, type CsrfConfig } from '../../src/security/csrf';
+import { validateCsrf, type CsrfConfig } from './csrf.js';
 
 const DEFAULT_CONFIG: CsrfConfig = {
   headerName: 'x-torii-request',

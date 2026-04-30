@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildSessionCookie, clearSessionCookie, parseSessionCookieName } from '../../src/security/cookie';
+import { buildSessionCookie, clearSessionCookie, parseSessionCookieName } from './cookie.js';
 
 const DEFAULT_COOKIE_NAME = '__Host-session';
 

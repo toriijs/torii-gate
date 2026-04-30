@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateIssuer } from '../../src/security/issuer';
+import { validateIssuer } from './issuer.js';
 
 const EXPECTED_ISSUER = 'https://auth.torri.dev/realms/myrealm';
 

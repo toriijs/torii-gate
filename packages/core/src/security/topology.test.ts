@@ -3,14 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  getCookiePrefix,
-  getCookieSameSite,
-  buildDomainAttribute,
-  deriveCookieName,
-  isCookieNameValid,
-  validateTopologyConfig,
-} from '../../src/security/topology';
+import { getCookiePrefix, getCookieSameSite, buildDomainAttribute, deriveCookieName, isCookieNameValid, validateTopologyConfig } from './topology.js';
 
 describe(getCookiePrefix, () => {
   it('returns __Host- for same-domain', () => {
