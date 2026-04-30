@@ -14,3 +14,4 @@ export {
   type TopologyValidationError,
 } from './topology.js';
 export { buildSessionCookie, clearSessionCookie, parseSessionCookieName, type CookieOptions } from './cookie.js';
+export { validateCsrf, type CsrfConfig } from './csrf.js';
