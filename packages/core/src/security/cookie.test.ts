@@ -221,6 +221,14 @@ describe('cookie expiry', () => {
     // 28 hours max — anything longer is a security risk without Redis revocation
     expect(maxAge).toBeLessThanOrEqual(28 * 60 * 60);
   });
+
+  it('throws when maxAge exceeds 28-hour ceiling', () => {
+    // Arrange
+    const maxAge = 28 * 60 * 60 + 1; // 28 hours + 1 second
+
+    // Act & Assert
+    expect(() => buildSessionCookie('test-session-id', { maxAge })).toThrow(/28-hour ceiling/);
+  });
 });
 
 describe(clearSessionCookie, () => {
@@ -250,6 +258,21 @@ describe(clearSessionCookie, () => {
     expect(header).toMatch(/;\s*HttpOnly/i);
     expect(header).toMatch(/;\s*Path=\//i);
     expect(header).not.toMatch(/;\s*Domain=/i);
+  });
+
+  it('throws when cookie name is invalid for same-domain topology', () => {
+    // Act & Assert
+    expect(() => clearSessionCookie('__Secure-session', { topology: 'same-domain' })).toThrow(/Expected prefix: __Host-/);
+  });
+
+  it('throws when cookie name is invalid for subdomain topology', () => {
+    // Act & Assert
+    expect(() =>
+      clearSessionCookie('plain-session', {
+        topology: 'subdomain',
+        cookieDomain: 'example.com',
+      }),
+    ).toThrow(/Expected prefix: __Secure-/);
   });
 });
 

@@ -204,6 +204,49 @@ describe('getRuntime — OIDC discovery', () => {
   });
 });
 
+describe('getRuntime — topology validation', () => {
+  beforeEach(() => {
+    _resetRuntime();
+  });
+
+  it('throws with formatted errors when topology config is invalid', async () => {
+    // Arrange
+    const invalidConfig = {
+      ...VALID_CONFIG,
+      security: {
+        ...VALID_CONFIG.security,
+        topology: 'subdomain' as const,
+        // Missing cookieDomain (required for subdomain)
+        allowedOrigins: [], // Empty (required for subdomain)
+        cookieName: '__Host-session', // Wrong prefix for subdomain
+      },
+    };
+
+    // Act & Assert
+    await expect(getRuntime(invalidConfig as never, mockAdapterFactory(), mockDiscoveryFetch())).rejects.toThrow(/topology configuration errors/);
+  });
+
+  it('error message includes all validation failures', async () => {
+    // Arrange
+    const invalidConfig = {
+      ...VALID_CONFIG,
+      security: {
+        ...VALID_CONFIG.security,
+        topology: 'subdomain' as const,
+        // All errors: missing cookieDomain, empty allowedOrigins, wrong cookie prefix
+      },
+    };
+
+    // Act & Assert
+    const error = await getRuntime(invalidConfig as never, mockAdapterFactory(), mockDiscoveryFetch()).catch((err: unknown) => err);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain('security.cookieDomain');
+    expect((error as Error).message).toContain('security.allowedOrigins');
+    expect((error as Error).message).toContain('security.cookieName');
+  });
+});
+
 describe(deriveSessionKey, () => {
   beforeEach(() => {
     _resetRuntime();

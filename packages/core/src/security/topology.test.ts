@@ -3,7 +3,15 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getCookiePrefix, getCookieSameSite, buildDomainAttribute, deriveCookieName, isCookieNameValid, validateTopologyConfig } from './topology.js';
+import {
+  getCookiePrefix,
+  getCookieSameSite,
+  buildDomainAttribute,
+  deriveCookieName,
+  isCookieNameValid,
+  validateTopologyConfig,
+  buildTopologyOptions,
+} from './topology.js';
 
 describe(getCookiePrefix, () => {
   it('returns __Host- for same-domain', () => {
@@ -68,6 +76,39 @@ describe(buildDomainAttribute, () => {
   it('throws when subdomain topology is used without cookieDomain', () => {
     // Act & Assert
     expect(() => buildDomainAttribute({ topology: 'subdomain' })).toThrow(/cookieDomain/);
+  });
+});
+
+describe(buildTopologyOptions, () => {
+  it('builds same-domain options without cookieDomain', () => {
+    // Act
+    const opts = buildTopologyOptions('same-domain');
+
+    // Assert
+    expect(opts.topology).toBe('same-domain');
+    expect((opts as unknown as { cookieDomain: undefined }).cookieDomain).toBeUndefined();
+  });
+
+  it('builds subdomain options with cookieDomain', () => {
+    // Act
+    const opts = buildTopologyOptions('subdomain', 'example.com');
+
+    // Assert
+    expect(opts.topology).toBe('subdomain');
+    expect(opts.cookieDomain).toBe('example.com');
+  });
+
+  it('throws when subdomain topology is used without cookieDomain', () => {
+    // Act & Assert
+    expect(() => buildTopologyOptions('subdomain' as never)).toThrow(/cookieDomain is required/);
+  });
+
+  it('includes optional cookieName when provided', () => {
+    // Act
+    const opts = buildTopologyOptions('same-domain', undefined, '__Host-session');
+
+    // Arrange
+    expect(opts.cookieName).toBe('__Host-session');
   });
 });
 

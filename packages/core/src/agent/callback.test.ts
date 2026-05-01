@@ -20,13 +20,13 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { CallbackError, handleCallback, type CallbackContext } from '../../src/agent/callback';
-import { generateState } from '../../src/security/state';
-import { generateNonce } from '../../src/security/nonce';
-import { generateCodeVerifier } from '../../src/security/pkce';
+import { CallbackError, generateSessionId, handleCallback, type CallbackContext } from './callback.js';
+import { generateState } from '../../src/security/state.js';
+import { generateNonce } from '../../src/security/nonce.js';
+import { generateCodeVerifier } from '../../src/security/pkce.js';
 import { base64urlEncode } from '../../src/security/utils/index.js';
 import type { JwksKeySource } from '../../src/security/jwt.js';
-import { TestPendingStore } from '../../tests/fixtures/pending-store';
+import { TestPendingStore } from '../../tests/fixtures/pending-store.js';
 import { createMockFetch } from '../../tests/fixtures/fixtures.js';
 
 interface JwkWithKid extends JsonWebKey {
@@ -459,6 +459,63 @@ describe('handleCallback — ID token verification (RFC 9700 §4.5.1)', () => {
     // Act & Assert
     await expect(handleCallback(params, context)).rejects.toThrow(/nonce/i);
   });
+
+  it('throws when id_token is present but no keySource configured', async () => {
+    // Arrange
+    const nowSec = Math.floor(Date.now() / 1000);
+    const nonce = await generateNonce();
+    const idToken = await buildIdToken({
+      iss: ISSUER,
+      aud: CLIENT_ID,
+      sub: 'user-123',
+      exp: nowSec + 300,
+      iat: nowSec,
+      nonce,
+    });
+
+    const state = await generateState();
+    const codeVerifier = await generateCodeVerifier();
+    const pendingStore = new TestPendingStore();
+    await pendingStore.set({ state, nonce, codeVerifier, expiresAt: Date.now() + 10000 });
+
+    const mockFetch = createMockFetch({ ...MOCK_TOKEN_RESPONSE, id_token: idToken });
+    // Context without keySource
+    const context: CallbackContext = {
+      issuer: ISSUER,
+      clientId: CLIENT_ID,
+      clientSecret: CLIENT_SECRET,
+      redirectUri: REDIRECT_URI,
+      pendingStore,
+      tokenEndpoint: TOKEN_ENDPOINT,
+      fetch: mockFetch,
+      // keySource: undefined — missing!
+    };
+
+    const params = new URLSearchParams({ code: 'valid-code', state, iss: ISSUER });
+
+    // Act & Assert
+    await expect(handleCallback(params, context)).rejects.toThrow(/no JWKS keySource/);
+  });
+
+  it('wraps JWT verification errors as CallbackError', async () => {
+    // Arrange
+    const nonce = await generateNonce();
+    // Completely malformed id_token (not even valid JWT structure)
+    const malformedIdToken = 'not.a.valid.jwt.token';
+
+    const state = await generateState();
+    const codeVerifier = await generateCodeVerifier();
+    const pendingStore = new TestPendingStore();
+    await pendingStore.set({ state, nonce, codeVerifier, expiresAt: Date.now() + 10000 });
+
+    const mockFetch = createMockFetch({ ...MOCK_TOKEN_RESPONSE, id_token: malformedIdToken });
+    const context = { ...buildContextWithJwks(mockFetch), pendingStore };
+
+    const params = new URLSearchParams({ code: 'valid-code', state, iss: ISSUER });
+
+    // Act & Assert
+    await expect(handleCallback(params, context)).rejects.toThrow(/id_token verification failed/);
+  });
 });
 
 // ─── redirect_uri validation (Phase 1.3) ──────────────────────────────────────
@@ -536,5 +593,34 @@ describe('handleCallback — client_id echo (RFC 9700 §4.4)', () => {
 
     // Act & Assert
     await expect(handleCallback(params, context)).rejects.toThrow(/client_id echo mismatch/i);
+  });
+});
+
+describe(generateSessionId, () => {
+  it('generates cryptographically random session IDs', () => {
+    // Act
+    const id1 = generateSessionId();
+    const id2 = generateSessionId();
+
+    //Assert
+    expect(id1.length).toBeGreaterThan(0);
+    expect(id2.length).toBeGreaterThan(0);
+    expect(id1).not.toBe(id2);
+  });
+
+  it('generates URL-safe base64 strings', () => {
+    // Act
+    const id = generateSessionId();
+
+    // Assert - URL-safe base64: only A-Z, a-z, 0-9, -, _
+    expect(id).toMatch(/^[A-Za-z0-9_-]+$/);
+  });
+
+  it('generates IDs with sufficient entropy', () => {
+    // Act
+    const id = generateSessionId();
+
+    // Assert - 24 random bytes → 32 base64 characters (minimum)
+    expect(id.length).toBeGreaterThanOrEqual(32);
   });
 });
