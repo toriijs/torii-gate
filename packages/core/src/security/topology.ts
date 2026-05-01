@@ -172,7 +172,7 @@ export function buildTopologyOptions(topology: Topology, cookieDomain?: string, 
     opts['cookieDomain'] = cookieDomain;
   }
   if (cookieName) opts['cookieName'] = cookieName;
-  return opts as TopologyAwareCookieOptions;
+  return opts;
 }
 
 /**
