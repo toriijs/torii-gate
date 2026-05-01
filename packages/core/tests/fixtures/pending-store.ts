@@ -1,6 +1,14 @@
 import type { PendingAuth, PendingAuthStore } from '../../src/adapters';
 
-// Simple in-memory test implementation (avoids circular dependency with adapter-memory)
+/**
+ * Simple in-memory pending store for testing.
+ * Avoids circular dependency with adapter-memory package.
+ *
+ * Features:
+ * - Single-use state (deleted after first get)
+ * - TTL enforcement (respects expiresAt)
+ * - In-memory Map storage
+ */
 export class TestPendingStore implements PendingAuthStore {
   private readonly store = new Map<string, PendingAuth>();
 
