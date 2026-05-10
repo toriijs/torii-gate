@@ -7,6 +7,50 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./agent": {
+      "import": "./dist/agent/index.js",
+      "types": "./dist/agent/index.d.ts"
+    },
+    "./proxy": {
+      "import": "./dist/proxy/index.js",
+      "types": "./dist/proxy/index.d.ts"
+    },
+    "./security": {
+      "import": "./dist/security/index.js",
+      "types": "./dist/security/index.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config/index.js",
+      "types": "./dist/config/index.d.ts"
+    },
+    "./runtime": {
+      "import": "./dist/runtime/index.js",
+      "types": "./dist/runtime/index.d.ts"
+    },
+    "./oidc": {
+      "import": "./dist/oidc/index.js",
+      "types": "./dist/oidc/index.d.ts"
+    },
+    "./adapters/interface": {
+      "import": "./dist/adapters/interface.js",
+      "types": "./dist/adapters/interface.d.ts"
+    },
+    "./adapters/pending": {
+      "import": "./dist/adapters/pending.js",
+      "types": "./dist/adapters/pending.d.ts"
+    },
+    "./adapters": {
+      "import": "./dist/adapters/index.js",
+      "types": "./dist/adapters/index.d.ts"
+    },
+    "./security/pkce-state-cookie": {
+      "import": "./dist/security/pkce-state-cookie.js",
+      "types": "./dist/security/pkce-state-cookie.d.ts"
+    },
+    "./security/utils": {
+      "import": "./dist/security/utils/index.js",
+      "types": "./dist/security/utils/index.d.ts"
     }
   },
   "files": [
