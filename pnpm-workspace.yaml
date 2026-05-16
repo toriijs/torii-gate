@@ -7,3 +7,8 @@ blockExoticSubdeps: true
 minimumReleaseAge: 1440 # 1 day
 trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 43200
+
+saveExact: true
+
+allowBuilds:
+  esbuild: false

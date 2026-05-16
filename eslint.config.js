@@ -25,6 +25,8 @@ export default [
       '**/package.json',
       '**/*.md',
       '**/*.json',
+      'vitest.base.ts',
+      '**/vitest.config.ts',
     ],
   },
 
@@ -78,8 +80,7 @@ export default [
 
   // Vitest (Unit & Integration)
   {
-    // src/**/*.spec.ts (Unit) and tests/**/*.test.ts (Integration)
-    files: ['src/**/*.spec.ts', 'src/**/*.test.ts', 'tests/**/*.test.ts'],
+    files: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     plugins: {
       vitest,
     },
