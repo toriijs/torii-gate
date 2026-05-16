@@ -31,6 +31,40 @@ function mockKeySource(keys: Record<string, { jwk: JsonWebKey; alg: JwsAlgorithm
   };
 }
 
+function createJwtPayload(
+  overrides?: Partial<{
+    iss: string;
+    aud: string | string[];
+    sub: string;
+    exp: number;
+    iat: number;
+    nbf: number;
+    nonce: string;
+  }>,
+): Record<string, unknown> {
+  const now = nowSec();
+
+  return {
+    iss: 'https://issuer.torii.dev',
+    aud: 'client-id',
+    sub: 'user-123',
+    exp: now + 300,
+    iat: now,
+    nonce: 'test-nonce',
+    ...overrides,
+  };
+}
+
+/**
+ * Get current Unix timestamp in seconds
+ *
+ * Standard helper for JWT exp/iat/nbf claims.
+ * Used extensively across jwt.test.ts.
+ *
+ * @returns Current time in seconds since epoch
+ */
+const nowSec = (): number => Math.floor(Date.now() / 1000);
+
 describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)', () => {
   let rsaKeyPair: CryptoKeyPair;
   let rsaJwk: JwkWithKid;
@@ -52,14 +86,8 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
   describe('happy path', () => {
     it('verifies valid RS256 ID token', async () => {
       // Arrange
-      const payload = {
-        iss: 'https://issuer.torii.dev',
-        aud: 'client-id',
-        sub: 'user-123',
-        exp: nowSec() + 300,
-        iat: nowSec(),
-        nonce: 'test-nonce',
-      };
+      const payload = createJwtPayload();
+
       const idToken = await buildIdToken(payload, 'RS256', 'rsa-test-key', rsaKeyPair);
       const keySource = mockKeySource({ 'rsa-test-key': { jwk: rsaJwk, alg: 'RS256' } });
 
@@ -80,13 +108,7 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
 
     it('verifies valid ES256 ID token', async () => {
       // Arrange
-      const payload = {
-        iss: 'https://issuer.torii.dev',
-        aud: 'client-id',
-        exp: nowSec() + 300,
-        iat: nowSec(),
-        nonce: 'test-nonce',
-      };
+      const payload = createJwtPayload();
       const idToken = await buildIdToken(payload, 'ES256', 'ec-test-key', ecKeyPair);
 
       const keySource: JwksKeySource = {
@@ -111,13 +133,7 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
 
     it('accepts aud as array', async () => {
       // Arrange
-      const payload = {
-        iss: 'https://issuer.torii.dev',
-        aud: ['client-id', 'other-audience'],
-        exp: nowSec() + 300,
-        iat: nowSec(),
-        nonce: 'test-nonce',
-      };
+      const payload = createJwtPayload({ aud: ['client-id', 'other-audience'] });
       const idToken = await buildIdToken(payload, 'RS256', 'rsa-test-key', rsaKeyPair);
       const keySource = mockKeySource({ 'rsa-test-key': { jwk: rsaJwk, alg: 'RS256' } });
 
@@ -240,13 +256,7 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
   describe('signature verification', () => {
     it('rejects tampered signature', async () => {
       // Arrange
-      const payload = {
-        iss: 'https://issuer.torii.dev',
-        aud: 'client-id',
-        exp: nowSec() + 300,
-        iat: nowSec(),
-        nonce: 'test-nonce',
-      };
+      const payload = createJwtPayload();
       let idToken = await buildIdToken(payload, 'RS256', 'rsa-test-key', rsaKeyPair);
 
       const parts = idToken.split('.');
@@ -271,12 +281,7 @@ describe('jwt — ID token verification (RFC 9700 §4.5.1 / OIDC Core §3.1.3.7)
 
     it('throws unknown_kid when keySource fails', async () => {
       // Arrange
-      const payload = {
-        iss: 'https://issuer.torii.dev',
-        aud: 'client-id',
-        exp: nowSec() + 300,
-        nonce: 'test-nonce',
-      };
+      const payload = createJwtPayload();
       const idToken = await buildIdToken(payload, 'RS256', 'rsa-test-key', rsaKeyPair);
       const keySource = mockKeySource({});
 
