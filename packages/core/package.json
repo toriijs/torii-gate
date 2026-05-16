@@ -1,6 +1,6 @@
 {
   "name": "@torii-gate/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "RFC 9700-compliant OAuth 2.0 Token Handler core engine with PKCE, OAuth Agent, and OAuth Proxy for edge-native BFF architectures",
   "type": "module",
   "exports": {
