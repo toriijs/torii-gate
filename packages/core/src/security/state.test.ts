@@ -15,10 +15,7 @@
 
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { generateState } from './state.js';
-import { generateNonce } from './nonce.js';
-import { generateCodeVerifier } from './pkce.js';
-import type { PendingAuth } from '../adapters/pending.js';
-import { TestPendingStore } from '../../tests/fixtures/pending-store.js';
+import { createPendingAuthFixture, TestPendingStore } from '../../tests/fixtures/pending-store.js';
 
 describe(generateState, () => {
   it('returns a non-empty string', async () => {
@@ -73,21 +70,10 @@ describe(generateState, () => {
 describe('state validation via TestPendingStore', () => {
   it('returns pending auth when state matches', async () => {
     // Arrange
-    const store = new TestPendingStore();
+    const { store, pendingAuth, state } = await createPendingAuthFixture();
+    await store.set(pendingAuth);
 
     // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
-
-    await store.set(pendingAuth);
     const result = await store.get(state);
 
     // Assert
@@ -95,23 +81,14 @@ describe('state validation via TestPendingStore', () => {
   });
 
   it('removes state after first retrieval — one-time use', async () => {
-    // Act - RFC 9700 §4.7: state MUST be invalidated after first use
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
+    // RFC 9700 §4.7: state MUST be invalidated after first use
+    // Arrange
+    const { store, pendingAuth, state } = await createPendingAuthFixture();
 
     await store.set(pendingAuth);
     await store.get(state); // first use
+
+    // Act
     const result = await store.get(state); // second use
 
     // Assert
@@ -120,21 +97,11 @@ describe('state validation via TestPendingStore', () => {
 
   it('returns null on second use — replay attack prevention', async () => {
     // Arrange
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
+    const { store, pendingAuth, state } = await createPendingAuthFixture();
 
     await store.set(pendingAuth);
+
+    // Act
     const first = await store.get(state); // first use — valid
     const second = await store.get(state); // second use — must reject
 
@@ -158,21 +125,13 @@ describe('state validation via TestPendingStore', () => {
 
   it('returns null for expired state — prevents login replay after timeout', async () => {
     // Arrange
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
+    const { store, pendingAuth, state } = await createPendingAuthFixture({
       expiresAt: Date.now() - 1, // already expired
-    };
+    });
 
     await store.set(pendingAuth);
+
+    // Act
     const result = await store.get(state);
 
     // Assert
@@ -183,19 +142,7 @@ describe('state validation via TestPendingStore', () => {
     // Arrange
     // Simulates two simultaneous callback requests with the same state
     // (e.g. double-click on login button)
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
+    const { store, pendingAuth, state } = await createPendingAuthFixture();
 
     await store.set(pendingAuth);
     const [r1, r2] = await Promise.all([store.get(state), store.get(state)]);

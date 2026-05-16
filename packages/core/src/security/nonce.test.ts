@@ -15,9 +15,7 @@
 import { describe, it, expect, expectTypeOf } from 'vitest';
 import { generateNonce, hashNonce } from './nonce.js';
 import { generateState } from './state.js';
-import { generateCodeVerifier } from './pkce.js';
-import type { PendingAuth } from '../adapters/pending.js';
-import { TestPendingStore } from '../../tests/fixtures/pending-store.js';
+import { createPendingAuthFixture } from '../../tests/fixtures/pending-store.js';
 
 describe(generateNonce, () => {
   it('returns a non-empty string', async () => {
@@ -103,21 +101,11 @@ describe(hashNonce, () => {
 describe('nonce validation via TestPendingStore', () => {
   it('returns pending auth with correct nonce', async () => {
     // Arrange
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
+    const { store, pendingAuth, state, nonce } = await createPendingAuthFixture();
 
     await store.set(pendingAuth);
+
+    // Act
     const result = await store.get(state);
 
     // Assert
@@ -126,21 +114,11 @@ describe('nonce validation via TestPendingStore', () => {
 
   it('nonce is removed after first retrieval — single use', async () => {
     // Arrange - OpenID Connect Core: nonce MUST be used only once
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
+    const { store, pendingAuth, state } = await createPendingAuthFixture();
 
     await store.set(pendingAuth);
+
+    // Act
     await store.get(state); // first use — removes from store
     const result = await store.get(state); // second use
 
@@ -149,21 +127,11 @@ describe('nonce validation via TestPendingStore', () => {
 
   it('returns null on second use — ID token replay attack prevention', async () => {
     // Arrange
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
-      expiresAt: Date.now() + 10_000,
-    };
+    const { store, pendingAuth, state } = await createPendingAuthFixture();
 
     await store.set(pendingAuth);
+
+    // Act
     const first = await store.get(state); // first — valid
     const second = await store.get(state); // replay — rejected
 
@@ -174,7 +142,7 @@ describe('nonce validation via TestPendingStore', () => {
 
   it('returns null for unknown nonce — forged or unknown', async () => {
     // Arrange
-    const store = new TestPendingStore();
+    const { store } = await createPendingAuthFixture();
 
     // Act
     const unknownState = await generateState();
@@ -186,19 +154,9 @@ describe('nonce validation via TestPendingStore', () => {
 
   it('returns null for expired nonce', async () => {
     // Arrange
-    const store = new TestPendingStore();
-
-    // Act
-    const state = await generateState();
-    const nonce = await generateNonce();
-    const codeVerifier = await generateCodeVerifier();
-
-    const pendingAuth: PendingAuth = {
-      state,
-      nonce,
-      codeVerifier,
+    const { store, pendingAuth, state } = await createPendingAuthFixture({
       expiresAt: Date.now() - 1, // already expired
-    };
+    });
 
     await store.set(pendingAuth);
     const result = await store.get(state);
