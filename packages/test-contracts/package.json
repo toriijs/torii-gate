@@ -1,0 +1,59 @@
+{
+  "name": "@torii-gate/test-contracts",
+  "version": "0.0.0",
+  "description": "RFC 9700 compliance tests and fixtures for building Token Handler session adapters",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./fixtures": {
+      "import": "./dist/fixtures.js",
+      "types": "./dist/fixtures.d.ts"
+    },
+    "./contract": {
+      "import": "./dist/contract.js",
+      "types": "./dist/contract.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "types:check": "tsc --noEmit --project tsconfig.json",
+    "clean": "rm -rf dist"
+  },
+  "author": "Chathuranga Hengodage",
+  "license": "EUPL-1.2",
+  "packageManager": "pnpm@11.1.2",
+  "keywords": [
+    "torii",
+    "rfc9700",
+    "oauth2",
+    "token-handler",
+    "compliance",
+    "testing",
+    "contract-tests",
+    "session-adapter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toriijs/torii-gate",
+    "directory": "packages/test-contracts"
+  },
+  "devDependencies": {
+    "@torii-gate/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@torii-gate/core": "workspace:*",
+    "vitest": ">=4.0.0"
+  },
+  "volta": {
+    "node": "24.15.0"
+  }
+}
