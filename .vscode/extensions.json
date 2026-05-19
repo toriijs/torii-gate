@@ -5,6 +5,8 @@
     "esbenp.prettier-vscode",
     "vivaxy.vscode-conventional-commits",
     "github.vscode-github-actions",
-    "vitest.explorer"
+    "vitest.explorer",
+    "streetsidesoftware.code-spell-checker",
+    "github.vscode-pull-request-github"
   ]
 }
