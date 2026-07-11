@@ -1,0 +1,6 @@
+{
+  // Version of the setting file.  Always 0.2
+  "version": "0.2",
+  "language": "en-GB,en-US",
+  "words": ["fumadocs", "llms", "pkce", "serviceworker", "torii", "toriijs", "Vali"]
+}

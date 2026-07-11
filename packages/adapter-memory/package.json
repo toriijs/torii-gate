@@ -1,0 +1,51 @@
+{
+  "name": "@torii-gate/adapter-memory",
+  "version": "0.0.0",
+  "description": "In-memory session adapter for Torii — development and testing only",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./pending": {
+      "import": "./dist/pending.js",
+      "types": "./dist/pending.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint .",
+    "types:check": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist"
+  },
+  "author": "Chathuranga Hengodage",
+  "license": "EUPL-1.2",
+  "packageManager": "pnpm@11.1.2",
+  "keywords": [
+    "torii",
+    "session",
+    "memory",
+    "dev",
+    "testing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/toriijs/torii-gate",
+    "directory": "packages/adapter-memory"
+  },
+  "devDependencies": {
+    "@torii-gate/core": "workspace:*",
+    "@torii-gate/test-contracts": "workspace:*"
+  },
+  "peerDependencies": {
+    "@torii-gate/core": "workspace:*"
+  }
+}

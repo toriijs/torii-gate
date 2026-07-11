@@ -19,5 +19,7 @@
   "git.branchProtection": ["main"],
   "git.branchProtectionPrompt": "alwaysPrompt",
   "git.pullBeforeCheckout": true,
-  "testing.automaticallyOpenTestResults": "openOnTestFailure"
+  "testing.automaticallyOpenTestResults": "openOnTestFailure",
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "conventionalCommits.scopes": ["core"]
 }
